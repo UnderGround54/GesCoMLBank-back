@@ -40,6 +40,6 @@ public abstract class BankAccount implements Serializable {
     private Client client;
 
     @JsonBackReference
-    @OneToMany(mappedBy = "bank_account")
+    @OneToMany(mappedBy = "bankAccount")
     Collection<Operation> operation = new ArrayList<Operation>();
 }
