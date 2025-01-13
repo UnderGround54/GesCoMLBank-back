@@ -7,9 +7,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
 import java.io.Serializable;
 
+/**
+ * Compte epargne
+ */
 @Entity
 @Data
 @AllArgsConstructor
@@ -18,5 +20,8 @@ import java.io.Serializable;
 @EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties({"hibernateLazyInitializer"})
 public class SavingAccount extends BankAccount implements Serializable {
+    /**
+     * Taux d'intérêt
+     */
     private double interestRate;
 }
