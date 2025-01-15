@@ -28,6 +28,7 @@ public class BankAccountService implements IBankAccountService {
     @Override
     public void createBankAccount(BankAccountDto bankAccountDto) {
         Optional<Client> client = this.clientRepository.findById(bankAccountDto.getClientId());
+        System.out.println(client);
         if (client.isPresent() && (bankAccountDto.getOverdraft() > 0 && bankAccountDto.getInterestRate() == 0)) {
             // compte courant
             CurrentAccount currentAccount = new CurrentAccount();

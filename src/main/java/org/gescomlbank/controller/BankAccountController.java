@@ -24,7 +24,7 @@ public class BankAccountController {
         this.bankAccountService.createBankAccount(bankAccountDto);
     }
 
-    @GetMapping("/accounts/{type}")
+    @GetMapping("/accounts/type/{type}")
     List<?> findAll(@PathVariable("type") String type) {
         if (type.equals("CC"))
             return this.bankAccountService.findCurrentAccounts();

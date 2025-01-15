@@ -23,7 +23,7 @@ public class ClientService implements IClientService {
         client.setEmail(clientDto.getEmail());
         client.setAddress(clientDto.getAddress());
         client.setTelephone(clientDto.getTelephone());
-        client.setTelephone(clientDto.getTelephone());
+        client.setBirthDate(clientDto.getBirthDate());
 
         this.clientRepository.save(client);
     }

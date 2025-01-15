@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.gescomlbank.enums.AccountStatus;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,7 +18,8 @@ import java.util.Date;
 @DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.INTEGER)
 @JsonIgnoreProperties({"hibernateLazyInitializer"})
 public abstract class BankAccount implements Serializable {
-
+    @Serial
+    private static final long serialVersionUID = -8885817712041252438L;
     @Id @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
@@ -31,11 +33,12 @@ public abstract class BankAccount implements Serializable {
     private String currency = "AR";
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private AccountStatus status;
 
     private Date createdAt = new Date();
 
-    @JoinColumn(nullable = false)
+    @JoinColumn(name = "clientId")
     @ManyToOne
     private Client client;
 

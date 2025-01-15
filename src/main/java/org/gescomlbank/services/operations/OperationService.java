@@ -78,16 +78,17 @@ public class OperationService implements IOperationService{
     @Override
     public boolean transfer(OperationDto operationDto) {
         String accountSource = operationDto.getNumAccountSource();
+        String accountDestination = operationDto.getNumAccountDestination();
         OperationDto operationDtoSource = new OperationDto(
                 accountSource,
-                null,
+                accountDestination,
                 operationDto.getAmount()
         );
         BankAccount bankAccountSource = this.withdrawal(operationDtoSource);
 
         if (bankAccountSource != null) {
             String numAccountDestination = operationDto.getNumAccountDestination();
-            OperationDto operationDtoDestination = new OperationDto(null, numAccountDestination, operationDto.getAmount());
+            OperationDto operationDtoDestination = new OperationDto(accountSource, numAccountDestination, operationDto.getAmount());
             this.payment(operationDtoDestination);
 
             return true;
