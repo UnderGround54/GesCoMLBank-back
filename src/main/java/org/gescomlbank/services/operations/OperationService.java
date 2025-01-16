@@ -28,8 +28,7 @@ public class OperationService implements IOperationService{
 
     @Override
     public void payment(OperationDto operationDto) {
-        System.out.println(operationDto.getNumAccountSource());
-        Optional<BankAccount> bankAccount = this.bankAccountRepository.findByNumAccount(operationDto.getNumAccountSource());
+        Optional<BankAccount> bankAccount = this.bankAccountRepository.findByNumAccount(operationDto.getNumAccountDestination());
         if (bankAccount.isPresent()) {
             BankAccount account = bankAccount.get();
             if (account.getStatus().equals(AccountStatus.ACTIVATED)) {
@@ -81,14 +80,14 @@ public class OperationService implements IOperationService{
         String accountDestination = operationDto.getNumAccountDestination();
         OperationDto operationDtoSource = new OperationDto(
                 accountSource,
-                accountDestination,
+                null,
                 operationDto.getAmount()
         );
         BankAccount bankAccountSource = this.withdrawal(operationDtoSource);
 
         if (bankAccountSource != null) {
             String numAccountDestination = operationDto.getNumAccountDestination();
-            OperationDto operationDtoDestination = new OperationDto(accountSource, numAccountDestination, operationDto.getAmount());
+            OperationDto operationDtoDestination = new OperationDto(null, numAccountDestination, operationDto.getAmount());
             this.payment(operationDtoDestination);
 
             return true;
