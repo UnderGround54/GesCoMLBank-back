@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
+@CrossOrigin("*")
 public class ClientController {
     private final ClientService clientService;
     ClientController(

@@ -7,13 +7,12 @@ import org.gescomlbank.enums.OperationType;
 import java.io.Serializable;
 import java.util.Date;
 
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Operation implements Serializable {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+public class Operation extends AbstractEntity {
 
     @Column(nullable = false)
     private double amount;

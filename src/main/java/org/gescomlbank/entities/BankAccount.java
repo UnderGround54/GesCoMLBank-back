@@ -4,24 +4,19 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.gescomlbank.enums.AccountStatus;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Data
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.INTEGER)
 @JsonIgnoreProperties({"hibernateLazyInitializer"})
-public abstract class BankAccount implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -8885817712041252438L;
-    @Id @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+public abstract class BankAccount extends AbstractEntity {
 
     @Column(nullable = false)
     private double balance;
@@ -35,8 +30,6 @@ public abstract class BankAccount implements Serializable {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private AccountStatus status;
-
-    private Date createdAt = new Date();
 
     @JoinColumn(name = "clientId")
     @ManyToOne

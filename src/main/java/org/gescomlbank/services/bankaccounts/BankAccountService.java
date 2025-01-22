@@ -34,7 +34,6 @@ public class BankAccountService implements IBankAccountService {
             CurrentAccount currentAccount = new CurrentAccount();
 
             currentAccount.setClient(client.get());
-            currentAccount.setCreatedAt(new Date());
             currentAccount.setStatus(AccountStatus.ACTIVATED);
             currentAccount.setNumAccount(generateNumAccount());
             currentAccount.setBalance(bankAccountDto.getBalance());
@@ -49,7 +48,6 @@ public class BankAccountService implements IBankAccountService {
             SavingAccount savingAccount = new SavingAccount();
 
             savingAccount.setClient(client.get());
-            savingAccount.setCreatedAt(new Date());
             savingAccount.setStatus(AccountStatus.ACTIVATED);
             savingAccount.setNumAccount(generateNumAccount());
             savingAccount.setBalance(bankAccountDto.getBalance());

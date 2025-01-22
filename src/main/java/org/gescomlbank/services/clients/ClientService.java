@@ -20,7 +20,7 @@ public class ClientService implements IClientService {
         Client client = new Client();
         client.setFirstName(clientDto.getFirstName());
         client.setLastName(clientDto.getLastName());
-        client.setEmail(clientDto.getEmail());
+        client.setMail(clientDto.getEmail());
         client.setAddress(clientDto.getAddress());
         client.setTelephone(clientDto.getTelephone());
         client.setBirthDate(clientDto.getBirthDate());
