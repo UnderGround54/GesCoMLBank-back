@@ -3,9 +3,11 @@ package org.gescomlbank.controller;
 import org.gescomlbank.dtos.ClientDto;
 import org.gescomlbank.entities.Client;
 import org.gescomlbank.services.clients.ClientService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/api")
@@ -19,12 +21,12 @@ public class ClientController {
     }
 
     @PostMapping("/clients")
-    void createClient(@RequestBody ClientDto clientDto) {
-        this.clientService.createNewClient( clientDto );
+    public ResponseEntity<Map<String, Object>> createClient(@RequestBody ClientDto clientDto) {
+        return this.clientService.createNewClient( clientDto );
     }
 
     @GetMapping("/clients")
-    List<Client> findAll() {
+    ResponseEntity<Map<String, Object>> findAll() {
         return this.clientService.findAll();
     }
 
