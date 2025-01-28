@@ -1,9 +1,11 @@
 package org.gescomlbank.services.clients;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.gescomlbank.dtos.ClientDto;
 import org.gescomlbank.entities.Client;
+import org.gescomlbank.mapper.ClientMapper;
 import org.gescomlbank.repositories.ClientRepository;
-import org.gescomlbank.services.utils.ResponseUtil;
+import org.gescomlbank.utils.ResponseUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -17,14 +19,16 @@ import java.util.Map;
 public class ClientService implements IClientService {
 
     private final ClientRepository clientRepository;
+    private final ClientMapper clientMapper;
     ClientService(final ClientRepository clientRepository) {
         this.clientRepository = clientRepository;
+        this.clientMapper = new ClientMapper();
     }
 
     @Override
     public ResponseEntity<Map<String, Object>> createNewClient(ClientDto clientDto) {
         try {
-            Client client = buildClientFromDto(clientDto);
+            Client client = this.clientMapper.toEntity(clientDto);
             client.setCreatedAt(Instant.now());
 
             this.clientRepository.save(client);
@@ -39,22 +43,6 @@ public class ClientService implements IClientService {
                     HttpStatus.INTERNAL_SERVER_ERROR
             );
         }
-    }
-
-    /**
-     *
-     */
-    private Client buildClientFromDto(ClientDto clientDto) {
-        Client client = new Client();
-
-        client.setFirstName(clientDto.getFirstName());
-        client.setLastName(clientDto.getLastName());
-        client.setMail(clientDto.getEmail());
-        client.setAddress(clientDto.getAddress());
-        client.setTelephone(clientDto.getTelephone());
-        client.setBirthDate(clientDto.getBirthDate());
-
-        return client;
     }
 
     @Override
@@ -74,7 +62,24 @@ public class ClientService implements IClientService {
     }
 
     @Override
-    public Client findOne(long id) {
-        return this.clientRepository.getReferenceById(id);
+    public ResponseEntity<Map<String, Object>> findOne(long id) {
+        try {
+            Client client = clientRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Client n'existe pas"));
+
+            ClientDto clientDto = clientMapper.toDto(client);
+
+            return ResponseUtil.successResponse("Client récupéré avec succès", clientDto);
+        } catch (EntityNotFoundException e) {
+            return ResponseUtil.errorsResponse(
+                    e.getMessage(),
+                    HttpStatus.NOT_FOUND
+            );
+        } catch (Exception e) {
+            return ResponseUtil.errorsResponse(
+                    "Erreur lors de la récupération du client : " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
     }
 }

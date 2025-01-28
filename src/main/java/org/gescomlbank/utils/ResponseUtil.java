@@ -1,4 +1,4 @@
-package org.gescomlbank.services.utils;
+package org.gescomlbank.utils;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

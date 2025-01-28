@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/api")
-@CrossOrigin("*")
 public class ClientController {
     private final ClientService clientService;
     ClientController(
@@ -31,7 +30,7 @@ public class ClientController {
     }
 
     @GetMapping("/clients/{id}")
-    Client findOne(@PathVariable("id") long id) {
+    public ResponseEntity<Map<String, Object>> findOne(@PathVariable("id") long id) {
         return this.clientService.findOne(id);
     }
 }
