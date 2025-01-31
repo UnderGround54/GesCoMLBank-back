@@ -5,10 +5,13 @@ import org.gescomlbank.entities.BankAccount;
 import org.gescomlbank.entities.CurrentAccount;
 import org.gescomlbank.entities.SavingAccount;
 import org.gescomlbank.services.bankaccounts.BankAccountService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/api")
@@ -19,17 +22,22 @@ public class BankAccountController {
     }
 
     @PostMapping("/accounts")
-    void createBankAccount(@RequestBody BankAccountDto bankAccountDto) {
-        this.bankAccountService.createBankAccount(bankAccountDto);
+    ResponseEntity<Map<String, Object>> createBankAccount(@RequestBody BankAccountDto bankAccountDto) {
+        return this.bankAccountService.createBankAccount(bankAccountDto);
     }
 
     @GetMapping("/accounts/type/{type}")
-    List<?> findAll(@PathVariable("type") String type) {
+    ResponseEntity<Map<String, Object>> findAll(
+            @PathVariable("type") String type,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize
+                    ) {
+        Pageable pageable = PageRequest.of(page, pageSize);
         if (type.equals("CC"))
-            return this.bankAccountService.findCurrentAccounts();
+            return this.bankAccountService.findCurrentAccounts(pageable);
 
         if (type.equals("CS"))
-            return this.bankAccountService.findSavingAccounts();
+            return this.bankAccountService.findSavingAccounts(pageable);
 
         return null;
     }

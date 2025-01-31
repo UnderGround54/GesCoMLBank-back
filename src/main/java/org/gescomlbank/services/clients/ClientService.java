@@ -6,6 +6,7 @@ import org.gescomlbank.mapper.ClientMapper;
 import org.gescomlbank.repositories.ClientRepository;
 import org.gescomlbank.services.ResponseWithPagination;
 import org.gescomlbank.utils.ResponseUtil;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -36,16 +37,16 @@ public class ClientService implements IClientService {
         Client client = this.clientMapper.toEntity(clientDto);
         this.clientRepository.save(client);
         Pageable pageable = PageRequest.of(0, 10);
-
-        return this.responseWithPagination.getResponse("Création avec succés", pageable, this.clientRepository);
+        Page<Client> clientsPaged = this.clientRepository.findAll(pageable);
+        return this.responseWithPagination.getResponse("Création avec succés", clientsPaged);
     }
 
     @Override
     public ResponseEntity<Map<String, Object>> findAll(Pageable pageable) {
+        Page<Client> clientsPaged = this.clientRepository.findAll(pageable);
         return this.responseWithPagination.getResponse(
                 "",
-                pageable,
-                this.clientRepository
+                clientsPaged
         );
     }
 

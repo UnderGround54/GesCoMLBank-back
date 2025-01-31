@@ -16,7 +16,7 @@ import java.util.Collection;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.INTEGER)
 @JsonIgnoreProperties({"hibernateLazyInitializer"})
-public abstract class BankAccount extends AbstractEntity {
+public class BankAccount extends AbstractEntity {
 
     @Column(nullable = false)
     private double balance;
