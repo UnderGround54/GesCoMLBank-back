@@ -14,6 +14,7 @@ public class ClientMapper {
         client.setAddress(clientDto.getAddress());
         client.setTelephone(clientDto.getTelephone());
         client.setBirthDate(clientDto.getBirthDate());
+
         return client;
     }
 

@@ -1,12 +1,12 @@
 package org.gescomlbank.controller;
 
 import org.gescomlbank.dtos.ClientDto;
-import org.gescomlbank.entities.Client;
 import org.gescomlbank.services.clients.ClientService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -25,8 +25,12 @@ public class ClientController {
     }
 
     @GetMapping("/clients")
-    ResponseEntity<Map<String, Object>> findAll() {
-        return this.clientService.findAll();
+    ResponseEntity<Map<String, Object>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize
+    ) {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return this.clientService.findAll(pageable);
     }
 
     @GetMapping("/clients/{id}")
