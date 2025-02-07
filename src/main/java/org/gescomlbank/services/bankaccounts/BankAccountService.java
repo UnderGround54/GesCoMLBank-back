@@ -53,7 +53,7 @@ public class BankAccountService implements IBankAccountService {
             this.bankAccountRepository.save(currentAccount);
             Page<CurrentAccount> currentAccountsPaged = bankAccountRepository.findCurrentAccounts(pageable);
 
-            return responseWithPagination.getResponse("", currentAccountsPaged);
+            return responseWithPagination.getResponse("Compte courant créer avec succes", currentAccountsPaged);
         }
 
         if ((bankAccountDto.getOverdraft() == 0 && bankAccountDto.getInterestRate() > 0)) {
@@ -83,46 +83,56 @@ public class BankAccountService implements IBankAccountService {
     }
 
     @Override
-    public BankAccount findOne(String numAccount) {
-        try {
-           return this.bankAccountRepository.findByNumAccount(numAccount).get();
-        } catch (Exception e) {
-            throw new RuntimeException("Ce compte n'existe pas !");
-        }
+    public ResponseEntity<Map<String, Object>> findOne(String numAccount, String type) {
+        return bankAccountRepository.findByNumAccount(numAccount)
+                .map(bankAccount -> {
+                    if (bankAccount instanceof CurrentAccount && type.equals("CC")) {
+                        return ResponseUtil.successResponse("Compte récupéré avec succès",
+                                bankAccountMapper.toDto((CurrentAccount) bankAccount));
+                    } else if (bankAccount instanceof SavingAccount && type.equals("CS")) {
+                        return ResponseUtil.successResponse("Compte récupéré avec succès",
+                                bankAccountMapper.toDto((SavingAccount) bankAccount));
+                    } else {
+                        return ResponseUtil.errorsResponse("Erreur lors de la recuperation compte", HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                })
+                .orElseGet(() -> ResponseUtil.errorsResponse("Compte n'existe pas", HttpStatus.NOT_FOUND));
     }
 
     @Override
-    public boolean activeAccount(String numAccount) {
-        try {
-            BankAccount bankAccount = findOne(numAccount);
-            if (bankAccount != null && bankAccount.getStatus().equals(AccountStatus.SUSPENDED)) {
-                bankAccount.setStatus(AccountStatus.ACTIVATED);
-                this.bankAccountRepository.save(bankAccount);
+    public ResponseEntity<Map<String, Object>> activeAccount(String numAccount) {
+           return bankAccountRepository.findByNumAccount(numAccount).map(
+                    bankAccount -> {
+                        if (bankAccount.getStatus().equals(AccountStatus.SUSPENDED)) {
+                            bankAccount.setStatus(AccountStatus.ACTIVATED);
+                            this.bankAccountRepository.save(bankAccount);
 
-                return true;
-            }
-        } catch (RuntimeException e) {
-            System.err.println("Erreur lors de l'activation du compte : " + e.getMessage());
-        }
-
-        return false;
+                            return findAllAccounts(PageRequest.of(0, 10));
+                        } else if (bankAccount.getStatus().equals(AccountStatus.ACTIVATED) ){
+                            return ResponseUtil.errorsResponse("Cette compte est déjà active", HttpStatus.CONFLICT);
+                        } else {
+                            return ResponseUtil.errorsResponse("Error lors de l'activation de carte", HttpStatus.INTERNAL_SERVER_ERROR);
+                        }
+                    }
+            ).orElseGet(() -> ResponseUtil.errorsResponse("Compte n'existe pas", HttpStatus.NOT_FOUND));
     }
 
     @Override
-    public boolean suspendAccount(String numAccount) {
-        try {
-            BankAccount bankAccount = findOne(numAccount);
-            if (bankAccount != null && bankAccount.getStatus().equals(AccountStatus.ACTIVATED)) {
-                bankAccount.setStatus(AccountStatus.SUSPENDED);
-                this.bankAccountRepository.save(bankAccount);
+    public ResponseEntity<Map<String, Object>> suspendAccount(String numAccount) {
+        return bankAccountRepository.findByNumAccount(numAccount).map(
+                bankAccount -> {
+                    if (bankAccount.getStatus().equals(AccountStatus.ACTIVATED)) {
+                        bankAccount.setStatus(AccountStatus.SUSPENDED);
+                        this.bankAccountRepository.save(bankAccount);
 
-                return true;
-            }
-        } catch (RuntimeException e) {
-            System.err.println("Erreur lors de la suspension du compte : " + e.getMessage());
-        }
-
-        return false;
+                        return findAllAccounts(PageRequest.of(0, 10));
+                    }else if (bankAccount.getStatus().equals(AccountStatus.SUSPENDED) ){
+                        return ResponseUtil.errorsResponse("Cette compte est déjà suspendu", HttpStatus.CONFLICT);
+                    }  else {
+                        return ResponseUtil.errorsResponse("Error lors de la suspension de compte", HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                }
+        ).orElseGet(() -> ResponseUtil.errorsResponse("Compte n'existe pas", HttpStatus.NOT_FOUND));
     }
 
 
@@ -143,5 +153,11 @@ public class BankAccountService implements IBankAccountService {
         }
 
         return sb.toString();
+    }
+
+    public ResponseEntity<Map<String, Object>> findAllAccounts(Pageable pageable) {
+        Page<BankAccount> bankAccounts = bankAccountRepository.findAll(pageable);
+
+        return responseWithPagination.getResponse("", bankAccounts);
     }
 }

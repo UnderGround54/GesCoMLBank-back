@@ -19,10 +19,9 @@ public interface IBankAccountService {
 
     ResponseEntity<Map<String, Object>> findCurrentAccounts(Pageable pageable);
 
-    BankAccount findOne(String numAccount);
+    ResponseEntity<Map<String, Object>> findOne(String numAccount, String type);
 
+    ResponseEntity<Map<String, Object>> activeAccount(String numAccount);
 
-    boolean activeAccount(String numAccount);
-
-    boolean suspendAccount(String numAccount);
+    ResponseEntity<Map<String, Object>> suspendAccount(String numAccount);
 }
