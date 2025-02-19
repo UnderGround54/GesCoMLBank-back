@@ -28,12 +28,11 @@ public class BankAccountService implements IBankAccountService {
     private final ClientRepository clientRepository;
     private final BankAccountMapper bankAccountMapper;
     private final ResponseWithPagination responseWithPagination;
-    BankAccountService(
-            final BankAccountRepository bankAccountRepository,
-            final ClientRepository clientRepository,
-            BankAccountMapper bankAccountMapper,
-            ResponseWithPagination responseWithPagination
-    ) {
+
+    public BankAccountService(BankAccountRepository bankAccountRepository,
+                              ClientRepository clientRepository,
+                              BankAccountMapper bankAccountMapper,
+                              ResponseWithPagination responseWithPagination) {
         this.bankAccountRepository = bankAccountRepository;
         this.clientRepository = clientRepository;
         this.bankAccountMapper = bankAccountMapper;
@@ -42,122 +41,86 @@ public class BankAccountService implements IBankAccountService {
 
     @Override
     public ResponseEntity<Map<String, Object>> createBankAccount(BankAccountDto bankAccountDto) {
-        Client client = this.clientRepository.findById(bankAccountDto.getClientId())
+        Client client = clientRepository.findById(bankAccountDto.getClientId())
                 .orElseThrow(() -> new EntityNotFoundException("Client introuvable"));
 
         Pageable pageable = PageRequest.of(0, 10);
 
-        if ((bankAccountDto.getOverdraft() > 0 && bankAccountDto.getInterestRate() == 0)) {
-            // compte courant
-            CurrentAccount currentAccount = bankAccountMapper.toCurrentAccount(bankAccountDto, client);
-            this.bankAccountRepository.save(currentAccount);
-            Page<CurrentAccount> currentAccountsPaged = bankAccountRepository.findCurrentAccounts(pageable);
-
-            return responseWithPagination.getResponse("Compte courant créer avec succes", currentAccountsPaged);
+        if (bankAccountDto.getOverdraft() > 0 && bankAccountDto.getInterestRate() == 0) {
+            return saveAndResponse(bankAccountDto, client, CurrentAccount.class, "Compte courant créé avec succès", pageable);
+        } else if (bankAccountDto.getOverdraft() == 0 && bankAccountDto.getInterestRate() > 0) {
+            return saveAndResponse(bankAccountDto, client, SavingAccount.class, "Compte épargne créé avec succès", pageable);
         }
-
-        if ((bankAccountDto.getOverdraft() == 0 && bankAccountDto.getInterestRate() > 0)) {
-            // compte epargne
-            SavingAccount savingAccount = bankAccountMapper.toSavingAccount(bankAccountDto, client);
-            this.bankAccountRepository.save(savingAccount);
-            Page<SavingAccount> savingAccountsPaged = bankAccountRepository.findSavingAccounts(pageable);
-
-            return responseWithPagination.getResponse("Compte epargne créer avec succes", savingAccountsPaged);
-        }
-
         return ResponseUtil.errorsResponse("Les paramètres fournis ne correspondent à aucun type de compte valide", HttpStatus.BAD_REQUEST);
     }
 
     @Override
     public ResponseEntity<Map<String, Object>> findSavingAccounts(Pageable pageable) {
-        Page<SavingAccount> savingAccountsPaged = bankAccountRepository.findSavingAccounts(pageable);
-
-        return responseWithPagination.getResponse("", savingAccountsPaged);
+        Page<SavingAccount> savingAccounts = bankAccountRepository.findSavingAccounts(pageable);
+        return responseWithPagination.getResponse("", savingAccounts);
     }
 
     @Override
     public ResponseEntity<Map<String, Object>> findCurrentAccounts(Pageable pageable) {
         Page<CurrentAccount> currentAccountsPaged = bankAccountRepository.findCurrentAccounts(pageable);
-
         return responseWithPagination.getResponse("", currentAccountsPaged);
+    }
+
+    private <T extends BankAccount> ResponseEntity<Map<String, Object>> saveAndResponse(BankAccountDto dto, Client client, Class<T> type, String message, Pageable pageable) {
+        T account = bankAccountMapper.toAccount(dto, client, type);
+        bankAccountRepository.save(account);
+        Page<BankAccount> accountsPaged =  bankAccountRepository.findAll(pageable);
+
+        return responseWithPagination.getResponse(message, accountsPaged);
     }
 
     @Override
     public ResponseEntity<Map<String, Object>> findOne(String numAccount, String type) {
         return bankAccountRepository.findByNumAccount(numAccount)
-                .map(bankAccount -> {
-                    if (bankAccount instanceof CurrentAccount && type.equals("CC")) {
-                        return ResponseUtil.successResponse("Compte récupéré avec succès",
-                                bankAccountMapper.toDto((CurrentAccount) bankAccount));
-                    } else if (bankAccount instanceof SavingAccount && type.equals("CS")) {
-                        return ResponseUtil.successResponse("Compte récupéré avec succès",
-                                bankAccountMapper.toDto((SavingAccount) bankAccount));
-                    } else {
-                        return ResponseUtil.errorsResponse("Erreur lors de la recuperation compte", HttpStatus.INTERNAL_SERVER_ERROR);
+                .map(account -> {
+                    if (account instanceof CurrentAccount && "CC".equals(type)) {
+                        return ResponseUtil.successResponse("Compte récupéré avec succès", bankAccountMapper.toCurrentDto(account));
+                    } else if (account instanceof SavingAccount && "CS".equals(type)) {
+                        return ResponseUtil.successResponse("Compte récupéré avec succès", bankAccountMapper.toSavingDto(account));
                     }
+                    return  ResponseUtil.errorsResponse("Compte n'existe pas", HttpStatus.NOT_FOUND);
+                })
+                .orElseGet(() -> ResponseUtil.errorsResponse("Compte n'existe pas", HttpStatus.NOT_FOUND));
+    }
+
+    private ResponseEntity<Map<String, Object>> changeAccountStatus(String numAccount, AccountStatus newStatus, String errorMessage) {
+        return bankAccountRepository.findByNumAccount(numAccount)
+                .map(account -> {
+                    if (!account.getStatus().equals(newStatus)) {
+                        account.setStatus(newStatus);
+                        bankAccountRepository.save(account);
+                        return findAllAccounts(PageRequest.of(0, 10));
+                    }
+                    return ResponseUtil.errorsResponse(errorMessage, HttpStatus.CONFLICT);
                 })
                 .orElseGet(() -> ResponseUtil.errorsResponse("Compte n'existe pas", HttpStatus.NOT_FOUND));
     }
 
     @Override
     public ResponseEntity<Map<String, Object>> activeAccount(String numAccount) {
-           return bankAccountRepository.findByNumAccount(numAccount).map(
-                    bankAccount -> {
-                        if (bankAccount.getStatus().equals(AccountStatus.SUSPENDED)) {
-                            bankAccount.setStatus(AccountStatus.ACTIVATED);
-                            this.bankAccountRepository.save(bankAccount);
-
-                            return findAllAccounts(PageRequest.of(0, 10));
-                        } else if (bankAccount.getStatus().equals(AccountStatus.ACTIVATED) ){
-                            return ResponseUtil.errorsResponse("Cette compte est déjà active", HttpStatus.CONFLICT);
-                        } else {
-                            return ResponseUtil.errorsResponse("Error lors de l'activation de carte", HttpStatus.INTERNAL_SERVER_ERROR);
-                        }
-                    }
-            ).orElseGet(() -> ResponseUtil.errorsResponse("Compte n'existe pas", HttpStatus.NOT_FOUND));
+        return changeAccountStatus(numAccount, AccountStatus.ACTIVATED, "Ce compte est déjà actif");
     }
 
     @Override
     public ResponseEntity<Map<String, Object>> suspendAccount(String numAccount) {
-        return bankAccountRepository.findByNumAccount(numAccount).map(
-                bankAccount -> {
-                    if (bankAccount.getStatus().equals(AccountStatus.ACTIVATED)) {
-                        bankAccount.setStatus(AccountStatus.SUSPENDED);
-                        this.bankAccountRepository.save(bankAccount);
-
-                        return findAllAccounts(PageRequest.of(0, 10));
-                    }else if (bankAccount.getStatus().equals(AccountStatus.SUSPENDED) ){
-                        return ResponseUtil.errorsResponse("Cette compte est déjà suspendu", HttpStatus.CONFLICT);
-                    }  else {
-                        return ResponseUtil.errorsResponse("Error lors de la suspension de compte", HttpStatus.INTERNAL_SERVER_ERROR);
-                    }
-                }
-        ).orElseGet(() -> ResponseUtil.errorsResponse("Compte n'existe pas", HttpStatus.NOT_FOUND));
+        return changeAccountStatus(numAccount, AccountStatus.SUSPENDED, "Ce compte est déjà suspendu");
     }
 
-
-    public static String generateNumAccount(){
+    public static String generateNumAccount() {
         Random rand = new Random();
-
-        // les 4 premiers chifres sont 0
         StringBuilder sb = new StringBuilder("0000");
-
-        // les 4 suivants sont 0 ou 1
-        for (int i = 0; i < 4; i++) {
-            sb.append(rand.nextInt(2));
-        }
-
-        //les 10 derniers sont generes aleatoirement
-        for (int i = 0; i < 10; i++) {
-            sb.append(rand.nextInt(10));
-        }
-
+        for (int i = 0; i < 4; i++) sb.append(rand.nextInt(2));
+        for (int i = 0; i < 10; i++) sb.append(rand.nextInt(10));
         return sb.toString();
     }
 
     public ResponseEntity<Map<String, Object>> findAllAccounts(Pageable pageable) {
         Page<BankAccount> bankAccounts = bankAccountRepository.findAll(pageable);
-
         return responseWithPagination.getResponse("", bankAccounts);
     }
 }
