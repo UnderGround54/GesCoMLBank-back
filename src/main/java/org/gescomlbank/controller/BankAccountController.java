@@ -1,14 +1,13 @@
 package org.gescomlbank.controller;
 
 import org.gescomlbank.dtos.BankAccountDto;
-import org.gescomlbank.entities.BankAccount;
-import org.gescomlbank.entities.CurrentAccount;
-import org.gescomlbank.entities.SavingAccount;
 import org.gescomlbank.services.bankaccounts.BankAccountService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/api")
@@ -19,39 +18,39 @@ public class BankAccountController {
     }
 
     @PostMapping("/accounts")
-    void createBankAccount(@RequestBody BankAccountDto bankAccountDto) {
-        this.bankAccountService.createBankAccount(bankAccountDto);
+    ResponseEntity<Map<String, Object>> createBankAccount(@RequestBody BankAccountDto bankAccountDto) {
+        return this.bankAccountService.createBankAccount(bankAccountDto);
     }
 
-    @GetMapping("/accounts/type/{type}")
-    List<?> findAccountByType(@PathVariable("type") String type) {
-        if (type.equals("CC"))
-            return this.bankAccountService.findCurrentAccounts();
+    @GetMapping("/accounts/type")
+    ResponseEntity<Map<String, Object>> findAll(
+            @RequestParam(value = "type", required = false) String type,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize
+                    ) {
+        Pageable pageable = PageRequest.of(page, pageSize);
 
-        if (type.equals("CS"))
-            return this.bankAccountService.findSavingAccounts();
+        if ("CC".equalsIgnoreCase(type))
+            return this.bankAccountService.findCurrentAccounts(pageable);
 
-        return null;
+        if ("CS".equalsIgnoreCase(type))
+            return this.bankAccountService.findSavingAccounts(pageable);
+
+        return this.bankAccountService.findAllAccounts(pageable);
     }
 
     @GetMapping("/accounts/{numAccount}/{type}")
-    ResponseEntity<?> findOneAccountByNum(@PathVariable("numAccount") String numAccount, @PathVariable("type") String type) {
-        BankAccount bankAccount = this.bankAccountService.findOne(numAccount);
-
-        if (type.equals("CC") && (bankAccount instanceof CurrentAccount))
-            return ResponseEntity.ok((CurrentAccount)bankAccount);
-        if (type.equals("CS") && (bankAccount instanceof SavingAccount))
-            return ResponseEntity.ok((SavingAccount)bankAccount);
-        return null;
+    ResponseEntity<Map<String, Object>> findOneAccountByNum(@PathVariable("numAccount") String numAccount, @PathVariable("type") String type) {
+        return this.bankAccountService.findOne(numAccount, type);
     }
 
-    @GetMapping("/accounts/activate/{numAccount}")
-    boolean activateAccount(@PathVariable("numAccount") String numAccount) {
+    @GetMapping("/accounts/active/{numAccount}")
+    ResponseEntity<Map<String, Object>> activateAccount(@PathVariable("numAccount") String numAccount) {
         return this.bankAccountService.activeAccount(numAccount);
     }
 
     @GetMapping("/accounts/suspend/{numAccount}")
-    boolean suspend(@PathVariable("numAccount") String numAccount) {
+    ResponseEntity<Map<String, Object>> suspend(@PathVariable("numAccount") String numAccount) {
         return this.bankAccountService.suspendAccount(numAccount);
     }
 }
