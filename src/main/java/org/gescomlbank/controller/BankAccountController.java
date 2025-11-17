@@ -24,7 +24,7 @@ public class BankAccountController {
     }
 
     @GetMapping("/accounts/type/{type}")
-    List<?> findAll(@PathVariable("type") String type) {
+    List<?> findAccountByType(@PathVariable("type") String type) {
         if (type.equals("CC"))
             return this.bankAccountService.findCurrentAccounts();
 
@@ -35,7 +35,7 @@ public class BankAccountController {
     }
 
     @GetMapping("/accounts/{numAccount}/{type}")
-    ResponseEntity<?> findAccount(@PathVariable("numAccount") String numAccount, @PathVariable("type") String type) {
+    ResponseEntity<?> findOneAccountByNum(@PathVariable("numAccount") String numAccount, @PathVariable("type") String type) {
         BankAccount bankAccount = this.bankAccountService.findOne(numAccount);
 
         if (type.equals("CC") && (bankAccount instanceof CurrentAccount))
@@ -45,8 +45,8 @@ public class BankAccountController {
         return null;
     }
 
-    @GetMapping("/accounts/active/{numAccount}")
-    boolean active(@PathVariable("numAccount") String numAccount) {
+    @GetMapping("/accounts/activate/{numAccount}")
+    boolean activateAccount(@PathVariable("numAccount") String numAccount) {
         return this.bankAccountService.activeAccount(numAccount);
     }
 
