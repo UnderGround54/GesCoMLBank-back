@@ -8,8 +8,9 @@ import org.gescomlbank.entities.Client;
 import org.gescomlbank.entities.CurrentAccount;
 import org.gescomlbank.entities.SavingAccount;
 import org.gescomlbank.enums.AccountStatus;
-import org.gescomlbank.services.bankaccounts.BankAccountService;
 import org.springframework.stereotype.Component;
+
+import java.util.Random;
 
 @Component
 public class BankAccountMapper {
@@ -18,7 +19,7 @@ public class BankAccountMapper {
             T account = type.getDeclaredConstructor().newInstance();
             account.setClient(client);
             account.setStatus(AccountStatus.ACTIVATED);
-            account.setNumAccount(BankAccountService.generateNumAccount());
+            account.setNumAccount(generateNumAccount());
             account.setBalance(dto.getBalance());
             account.setCurrency(dto.getCurrency());
 
@@ -53,5 +54,13 @@ public class BankAccountMapper {
                 account.getClient().getId(),
                 account.getStatus()
         );
+    }
+
+    private static String generateNumAccount() {
+        Random rand = new Random();
+        StringBuilder sb = new StringBuilder("0000");
+        for (int i = 0; i < 4; i++) sb.append(rand.nextInt(2));
+        for (int i = 0; i < 10; i++) sb.append(rand.nextInt(10));
+        return sb.toString();
     }
 }

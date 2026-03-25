@@ -27,10 +27,11 @@ public class ClientController {
     @GetMapping("/clients")
     ResponseEntity<Map<String, Object>> findAll(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int pageSize
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "")   String search
     ) {
         Pageable pageable = PageRequest.of(page, pageSize);
-        return this.clientService.findAll(pageable);
+        return this.clientService.findAll(pageable, search);
     }
 
     @GetMapping("/clients/{id}")

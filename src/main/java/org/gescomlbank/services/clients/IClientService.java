@@ -10,7 +10,7 @@ import java.util.Map;
 public interface IClientService {
     ResponseEntity<Map<String, Object>> createNewClient(ClientDto clientDto);
 
-    ResponseEntity<Map<String, Object>> findAll(Pageable pageable);
+    ResponseEntity<Map<String, Object>> findAll(Pageable pageable, String search);
 
     ResponseEntity<Map<String, Object>> findOne(long id);
 }

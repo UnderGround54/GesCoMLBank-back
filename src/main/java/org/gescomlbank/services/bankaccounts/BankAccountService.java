@@ -111,14 +111,6 @@ public class BankAccountService implements IBankAccountService {
         return changeAccountStatus(numAccount, AccountStatus.SUSPENDED, "Ce compte est déjà suspendu");
     }
 
-    public static String generateNumAccount() {
-        Random rand = new Random();
-        StringBuilder sb = new StringBuilder("0000");
-        for (int i = 0; i < 4; i++) sb.append(rand.nextInt(2));
-        for (int i = 0; i < 10; i++) sb.append(rand.nextInt(10));
-        return sb.toString();
-    }
-
     public ResponseEntity<Map<String, Object>> findAllAccounts(Pageable pageable) {
         Page<BankAccount> bankAccounts = bankAccountRepository.findAll(pageable);
         return responseWithPagination.getResponse("", bankAccounts);

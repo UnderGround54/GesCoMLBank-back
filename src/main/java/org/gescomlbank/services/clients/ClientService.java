@@ -13,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.Map;
 
 @Service
@@ -42,12 +41,16 @@ public class ClientService implements IClientService {
     }
 
     @Override
-    public ResponseEntity<Map<String, Object>> findAll(Pageable pageable) {
-        Page<Client> clientsPaged = this.clientRepository.findAll(pageable);
-        return this.responseWithPagination.getResponse(
-                "",
-                clientsPaged
-        );
+    public ResponseEntity<Map<String, Object>> findAll(Pageable pageable, String search) {
+        Page<Client> clientsPaged;
+
+        if (search == null || search.trim().isEmpty()) {
+            clientsPaged = this.clientRepository.findAll(pageable);
+        } else {
+            clientsPaged = this.clientRepository.searchClients(search.trim(), pageable);
+        }
+
+        return this.responseWithPagination.getResponse("", clientsPaged);
     }
 
     @Override

@@ -3,11 +3,18 @@ package org.gescomlbank.services.operations;
 import lombok.extern.slf4j.Slf4j;
 import org.gescomlbank.dtos.OperationDto;
 import org.gescomlbank.entities.BankAccount;
+import org.gescomlbank.entities.Client;
 import org.gescomlbank.entities.Operation;
 import org.gescomlbank.enums.AccountStatus;
 import org.gescomlbank.enums.OperationType;
+import org.gescomlbank.mapper.OperationMapper;
 import org.gescomlbank.repositories.BankAccountRepository;
 import org.gescomlbank.repositories.OperationRepository;
+import org.gescomlbank.services.ResponseWithPagination;
+import org.gescomlbank.services.bankaccounts.BankAccountService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -18,12 +25,18 @@ public class OperationService implements IOperationService{
 
     private final BankAccountRepository bankAccountRepository;
     private final OperationRepository operationRepository;
+    private final OperationMapper operationMapper;
+    private final ResponseWithPagination responseWithPagination;
     OperationService(
             final BankAccountRepository bankAccountRepository,
-            final OperationRepository operationRepository
+            final OperationRepository operationRepository,
+            final OperationMapper operationMapper,
+            ResponseWithPagination responseWithPagination
     ) {
         this.bankAccountRepository = bankAccountRepository;
         this.operationRepository = operationRepository;
+        this.operationMapper = operationMapper;
+        this.responseWithPagination = responseWithPagination;
     }
 
     @Override
@@ -33,12 +46,7 @@ public class OperationService implements IOperationService{
             BankAccount account = bankAccount.get();
             if (account.getStatus().equals(AccountStatus.ACTIVATED)) {
                 account.setBalance(account.getBalance() + operationDto.getAmount());
-                Operation operation = new Operation();
-                operation.setDateOperation(new Date());
-                operation.setAmount(operationDto.getAmount());
-                operation.setOperationType(OperationType.CREDIT);
-                operation.setBankAccount(account);
-                operation.setNumOperation(generateNumOperation());
+                Operation operation = this.operationMapper.toEntity(operationDto, account, OperationType.CREDIT);
                 this.operationRepository.save(operation);
 
                 this.bankAccountRepository.save(account);
@@ -57,12 +65,7 @@ public class OperationService implements IOperationService{
             BankAccount account = bankAccount.get();
             if (account.getStatus().equals(AccountStatus.ACTIVATED) && account.getBalance() > operationDto.getAmount()) {
                 account.setBalance(account.getBalance() - operationDto.getAmount());
-                Operation operation = new Operation();
-                operation.setDateOperation(new Date());
-                operation.setAmount(operationDto.getAmount());
-                operation.setOperationType(OperationType.DEBIT);
-                operation.setBankAccount(account);
-                operation.setNumOperation(generateNumOperation());
+                Operation operation = this.operationMapper.toEntity(operationDto, account, OperationType.DEBIT);
                 this.operationRepository.save(operation);
 
                 return this.bankAccountRepository.save(account);
@@ -96,26 +99,12 @@ public class OperationService implements IOperationService{
     }
 
     @Override
-    public List<Operation> findByClientNumAccount(String numAccount) {
-        List<Operation> list = new ArrayList<>();
-        for (Operation operation : this.operationRepository.findAll()) {
-            if (operation.getBankAccount().getNumAccount().equals(numAccount)) {
-                list.add(operation);
-            }
-        }
-        return list;
-    }
+    public ResponseEntity<Map<String, Object>> findByClientNumAccount(String numAccount, Pageable pageable) {
+        Page<Operation> operationPaged = this.operationRepository.findAll(pageable);
 
-    private static String generateNumOperation() {
-        Random random = new Random();
-        StringBuilder sb = new StringBuilder("00");
-
-        for (int i = 0; i < 3; i++) {
-            sb.append(random.nextInt(2));
-        }
-        for (int i = 0; i < 3; i++) {
-            sb.append(random.nextInt(10));
-        }
-        return sb.toString();
+        return this.responseWithPagination.getResponse(
+                "",
+                operationPaged
+        );
     }
 }
