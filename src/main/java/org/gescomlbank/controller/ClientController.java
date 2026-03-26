@@ -38,4 +38,9 @@ public class ClientController {
     public ResponseEntity<Map<String, Object>> findOne(@PathVariable("id") long id) {
         return this.clientService.findOne(id);
     }
+
+    @PutMapping("/clients/{id}")
+    public ResponseEntity<Map<String, Object>> updateClient(@PathVariable long id, @RequestBody ClientDto clientDto) {
+        return this.clientService.updateClient(id, clientDto);
+    }
 }

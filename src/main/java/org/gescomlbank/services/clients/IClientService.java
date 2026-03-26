@@ -13,4 +13,6 @@ public interface IClientService {
     ResponseEntity<Map<String, Object>> findAll(Pageable pageable, String search);
 
     ResponseEntity<Map<String, Object>> findOne(long id);
+    
+    ResponseEntity<Map<String, Object>> updateClient(long id, ClientDto clientDto);
 }

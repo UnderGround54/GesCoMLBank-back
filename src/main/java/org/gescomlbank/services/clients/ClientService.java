@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ClientService implements IClientService {
@@ -58,5 +59,21 @@ public class ClientService implements IClientService {
         return clientRepository.findById(id)
                 .map(client -> ResponseUtil.successResponse("Client récupéré avec succès", clientMapper.toDto(client)))
                 .orElseGet(() -> ResponseUtil.errorsResponse("Client n'existe pas", HttpStatus.NOT_FOUND));
+    }
+
+    @Override
+    public ResponseEntity<Map<String, Object>> updateClient(long id, ClientDto clientDto) {
+        Optional<Client> optionalClient = clientRepository.findById(id);
+        if (optionalClient.isEmpty()) {
+            return ResponseUtil.errorsResponse("Client n'existe pas", HttpStatus.NOT_FOUND);
+        }
+
+        Client client = optionalClient.get();
+        this.clientMapper.updateEntity(client, clientDto);
+        this.clientRepository.save(client);
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Client> clientsPaged = this.clientRepository.findAll(pageable);
+        return this.responseWithPagination.getResponse("Client mis à jour avec succès", clientsPaged);
     }
 }
