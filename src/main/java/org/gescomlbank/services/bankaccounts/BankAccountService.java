@@ -46,9 +46,9 @@ public class BankAccountService implements IBankAccountService {
 
         Pageable pageable = PageRequest.of(0, 10);
 
-        if (bankAccountDto.getOverdraft() > 0 && bankAccountDto.getInterestRate() == 0) {
+        if (bankAccountDto.getInterestRate() == 0) {
             return saveAndResponse(bankAccountDto, client, CurrentAccount.class, "Compte courant créé avec succès", pageable);
-        } else if (bankAccountDto.getOverdraft() == 0 && bankAccountDto.getInterestRate() > 0) {
+        } else if (bankAccountDto.getInterestRate() > 0) {
             return saveAndResponse(bankAccountDto, client, SavingAccount.class, "Compte épargne créé avec succès", pageable);
         }
         return ResponseUtil.errorsResponse("Les paramètres fournis ne correspondent à aucun type de compte valide", HttpStatus.BAD_REQUEST);
